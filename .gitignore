@@ -1,1 +1,25 @@
+# Secrets
 key.txt
+
+# AI Tooling & Graphify
+backend/graphify-out/
+.specstory/ai_rules_backups/
+
+# Backend Build & Runtime
+backend/target/
+backend/build/
+backend/out/
+backend/*.jar
+backend/*.war
+backend/*.log
+backend/hs_err_pid*
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# IDE IntelliJ IDEA
+backend/.idea/
+backend/*.iml
+
+# IDE VS Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/tasks.json
