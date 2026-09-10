@@ -783,3 +783,1522 @@ Created the constitution at `.specify/memory/constitution.md`.
 Deferred intent: implement the ticket management backend features. Use `/speckit-specify` to create the feature specification.
 
 Suggested commit: `docs: establish ticket management system constitution v1.0.0`
+
+---
+
+_**User (2026-09-08 12:35:13Z)**_
+
+/speckit-specify  Build a Ticket Management System backend based on the following specific requirements.
+
+### Core Domain & Capabilities
+- Ticket Attributes:
+  - id (Long, auto-generated)
+  - title (string, required, 5-150 characters)
+  - description (string, required)
+  - priority (enum: LOW, MEDIUM, HIGH, URGENT)
+  - status (enum: OPEN, IN_PROGRESS, RESOLVED, CLOSED, CANCELLED)
+  - assigneeId (Long/String, optional)
+  - createdAt, updatedAt (timestamps, auto-managed)
+- Comment Attributes:
+  - id (Long, auto-generated)
+  - ticketId (Long, required foreign key)
+  - content (string, required, 1-1000 characters)
+  - author (string, optional/system default)
+  - createdAt (timestamp, auto-managed)
+
+### Status State Machine
+- Allowed transitions:
+  - OPEN -> IN_PROGRESS
+  - IN_PROGRESS -> RESOLVED
+  - RESOLVED -> CLOSED
+  - OPEN -> CANCELLED
+  - IN_PROGRESS -> CANCELLED
+- Terminal states: CLOSED and CANCELLED cannot transition to any other state.
+- Strict rejection: Reject any invalid transition (e.g., CLOSED -> OPEN, RESOLVED -> OPEN, CANCELLED -> OPEN) with an HTTP 400 or 409 Conflict.
+
+### Required Operations & Endpoints
+- Create Ticket: POST /api/v1/tickets (sets initial status to OPEN; validates title, description, priority)
+- List & Search Tickets: GET /api/v1/tickets
+  - Filter by status (?status=OPEN)
+  - Search by keyword matching title or description (?keyword=login)
+  - Pagination support (?page=0&size=10)
+- View Ticket Details: GET /api/v1/tickets/{id} (returns ticket with associated comments)
+- Update Ticket Details: PUT /api/v1/tickets/{id} (updates title, description, priority, assigneeId)
+- Update Ticket Status: PATCH /api/v1/tickets/{id}/status (enforces state machine validation)
+- Add Comments: POST /api/v1/tickets/{id}/comments (adds a comment to an existing ticket)
+
+### Technical & Architectural Constraints
+- Framework & Stack: Java 21, Spring Boot 4.1.1, Spring Data JPA, PostgreSQL, Lombok.
+- Keep It Simple:
+  - No Flyway (use Hibernate ddl-auto for schema persistence).
+- Validation & Error Handling:
+  - Strict backend validation using Jakarta Validation (@NotBlank, @NotNull, @Size).
+  - Global exception handling via @RestControllerAdvice returning meaningful, structured error messages (RFC 7807 problem details or clean custom error response).
+- Architecture:
+  - Strict Controller -> Service -> Repository layer separation.
+  - Java 21 records for Request and Response DTOs (never expose JPA entities directly in controllers).
+- Testing:
+  - Service unit tests with JUnit 5 & Mockito verifying CRUD, keyword search, comment addition, and all valid/invalid status transitions.
+  - Controller slice tests with @WebMvcTest testing validation failures and HTTP responses.
+
+### Deliverables Required
+- User stories and acceptance criteria (Given/When/Then).
+- REST API contracts with request, response, and error payloads.
+- Relational schema definitions for tickets and comments tables (including indexes for keyword search and status filter).
+- Edge-case checklist covering invalid transitions, missing ticket references on comments, and validation boundaries.
+
+---
+
+_**Agent (copilot/auto)**_
+
+<think><details><summary>Thought Process</summary>
+The spec, checklist, and `.specify/feature.json` are created. The first validation pass is now focused on artifact integrity: confirming no template placeholders remain in `spec.md`, all required sections and endpoint/state-machine content exist, and the feature locator JSON points to the new directory.
+</details></think>
+
+_**Agent (copilot/auto)**_
+
+I’ll create the feature specification artifacts only: first I’ll inspect the active Spec Kit template, numbering settings, constitution, and any extension hooks, then I’ll generate and validate one backend feature spec plus its quality checklist. No application code will be changed.
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="search" data-tool-name="file_search"><details>
+<summary>Tool use: **file_search**</summary>
+
+Searched for files matching `TMS` · `.specify/init-options.json`, 1 match
+
+**Input:**
+
+- query: `/home/aniket-kumar/poc/TMS/.specify/init-options.json`
+
+**Result:**
+
+```
+1 total result
+/home/aniket-kumar/poc/TMS/.specify/init-options.json
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="search" data-tool-name="file_search"><details>
+<summary>Tool use: **file_search**</summary>
+
+Searched for files matching `TMS` · `.specify/extensions.yml`, no matches
+
+**Input:**
+
+- query: `/home/aniket-kumar/poc/TMS/.specify/extensions.yml`
+
+**Result:**
+
+```
+No files found
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="search" data-tool-name="file_search"><details>
+<summary>Tool use: **file_search**</summary>
+
+Searched for files matching `TMS` · `.specify/templates/spec-template.md`, 1 match
+
+**Input:**
+
+- query: `/home/aniket-kumar/poc/TMS/.specify/templates/spec-template.md`
+
+**Result:**
+
+```
+1 total result
+/home/aniket-kumar/poc/TMS/.specify/templates/spec-template.md
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="search" data-tool-name="file_search"><details>
+<summary>Tool use: **file_search**</summary>
+
+Searched for files matching `TMS` · `specs/*`, no matches
+
+**Input:**
+
+- query: `/home/aniket-kumar/poc/TMS/specs/*`
+
+**Result:**
+
+```
+No files found
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="read" data-tool-name="read_file"><details>
+<summary>Tool use: **read_file**</summary>
+
+Read `constitution.md`
+
+**Input:**
+
+- endLine: `160`
+- filePath: `/home/aniket-kumar/poc/TMS/.specify/memory/constitution.md`
+- startLine: `1`
+
+**Result:**
+
+```
+<!--
+Sync Impact Report
+- Version change: unratified scaffold -> 1.0.0
+- Modified principles: template placeholders -> Backend Scope, API-First Contracts,
+  Testable Quality, Persistence and Validation, and Maintainable Simplicity
+- Added sections: Technology and Security Constraints; Development Workflow and Quality Gates
+- Removed sections: none
+- Follow-up TODOs: Confirm the original ratification date.
+-->
+
+# Ticket Management System Constitution
+
+## Core Principles
+
+### I. Backend Scope and Ownership
+The initial product scope is a Spring Boot backend running on Java 21. Ticket creation,
+listing, detail views, updates to title, description, priority, and assignee, comments,
+keyword search, status filtering, persistence, input validation, and meaningful errors
+MUST be implemented and exposed through backend APIs before frontend work is treated as
+part of this product increment. Each feature MUST have one clear owning application
+boundary and MUST avoid duplicating business rules across controllers.
+
+### II. API-First Contracts
+All externally consumed behavior MUST be defined by the central OpenAPI 3.x contract
+before implementation is considered complete. Endpoints MUST use consistent resource
+naming, request and response schemas, validation constraints, status codes, and error
+payloads. Breaking contract changes MUST be identified explicitly and accompanied by a
+migration decision. Rationale: a stable contract keeps generated clients and future
+frontend work aligned with backend behavior.
+
+### III. Testable Quality
+Every feature MUST include automated tests at the level that exercises its risk: unit
+tests for domain rules, web-layer tests for request and response behavior, and integration
+tests for persistence or cross-layer contracts. Tests MUST cover successful behavior,
+validation failures, not-found cases, and other documented error paths. A change is not
+complete while its relevant tests fail or its behavior is unverified.
+
+### IV. Persistence, Validation, a
+… (output truncated)
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="read" data-tool-name="read_file"><details>
+<summary>Tool use: **read_file**</summary>
+
+Read skill `speckit-specify`, lines 1 to 320
+
+**Input:**
+
+- endLine: `320`
+- filePath: `/home/aniket-kumar/poc/TMS/.github/skills/speckit-specify/SKILL.md`
+- startLine: `1`
+
+**Result:**
+
+````
+---
+name: "speckit-specify"
+description: "Create or update the feature specification from a natural language feature description."
+compatibility: "Requires spec-kit project structure with .specify/ directory"
+metadata:
+  author: "github-spec-kit"
+  source: "templates/commands/specify.md"
+---
+
+
+## User Input
+
+```text
+$ARGUMENTS
+```
+
+You **MUST** consider the user input before proceeding (if not empty).
+
+## Pre-Execution Checks
+
+**Check for extension hooks (before specification)**:
+- Check if `.specify/extensions.yml` exists in the project root.
+- If it exists, read it and look for entries under the `hooks.before_specify` key
+- If the YAML cannot be parsed or is invalid, skip hook checking silently and continue normally
+- Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
+- For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
+  - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
+  - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
+- When constructing command invocations from hook command names, replace dots (`.`) with hyphens (`-`). For example, `speckit.git.commit` → `/speckit-git-commit`.
+- For each executable hook, output the following based on its `optional` flag:
+  - **Optional hook** (`optional: true`):
+    ```
+    ## Extension Hooks
+
+    **Optional Pre-Hook**: {extension}
+    Command: `/{command}`
+    Description: {description}
+
+    Prompt: {prompt}
+    To execute: `/{command}`
+    ```
+  - **Mandatory hook** (`optional: false`):
+    ```
+    ## Extension Hooks
+
+    **Automatic Pre-Hook**: {extension}
+    Executing: `/{command}`
+    EXECUTE_COMMAND: {command}
+
+    Wait for the result of the hook command before proceeding to the Outline.
+    ```
+    After emitting the block above you MUST actually invoke the hook and wait for it to finish be
+… (output truncated)
+````
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+The feature is clear enough to avoid clarification markers: the user supplied the domain, state machine, endpoints, validation boundaries, testing expectations, schema needs, and deliverables. The next step is to resolve the project’s exact spec template and numbering mode, then I’ll create the single sequential feature directory.
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="generic" data-tool-name="list_dir"><details>
+<summary>Tool use: **list_dir**</summary>
+
+Read `specs`
+
+**Input:**
+
+- path: `/home/aniket-kumar/poc/TMS/specs`
+
+**Result:**
+
+```
+ERROR while calling tool: Error: ENOENT: no such file or directory, scandir '/home/aniket-kumar/poc/TMS/specs'
+Please check your input and try again.
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="read" data-tool-name="read_file"><details>
+<summary>Tool use: **read_file**</summary>
+
+Read `pom.xml`
+
+**Input:**
+
+- endLine: `220`
+- filePath: `/home/aniket-kumar/poc/TMS/backend/pom.xml`
+- startLine: `1`
+
+**Result:**
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.1.1</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.tms.backend</groupId>
+	<artifactId>tms-backend</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name/>
+	<description/>
+	<url/>
+	<licenses>
+		<license/>
+	</licenses>
+	<developers>
+		<developer/>
+	</developers>
+	<scm>
+		<connection/>
+		<developerConnection/>
+		<tag/>
+		<url/>
+	</scm>
+	<properties>
+		<java.version>21</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-compile</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>compile</g
+… (output truncated)
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="read" data-tool-name="read_file"><details>
+<summary>Tool use: **read_file**</summary>
+
+Read `init-options.json`
+
+**Input:**
+
+- endLine: `80`
+- filePath: `/home/aniket-kumar/poc/TMS/.specify/init-options.json`
+- startLine: `1`
+
+**Result:**
+
+```
+{
+  "ai": "copilot",
+  "ai_skills": true,
+  "feature_numbering": "sequential",
+  "here": false,
+  "integration": "copilot",
+  "script": "sh",
+  "speckit_version": "1.0.1"
+}
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="read" data-tool-name="read_file"><details>
+<summary>Tool use: **read_file**</summary>
+
+Read `spec-template.md`
+
+**Input:**
+
+- endLine: `260`
+- filePath: `/home/aniket-kumar/poc/TMS/.specify/templates/spec-template.md`
+- startLine: `1`
+
+**Result:**
+
+```
+# Feature Specification: [FEATURE NAME]
+
+**Feature Branch**: `[###-feature-name]`
+
+**Created**: [DATE]
+
+**Status**: Draft
+
+**Input**: User description: "$ARGUMENTS"
+
+## User Scenarios & Testing *(mandatory)*
+
+<!--
+  IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
+  Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
+  you should still have a viable MVP (Minimum Viable Product) that delivers value.
+
+  Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
+  Think of each story as a standalone slice of functionality that can be:
+  - Developed independently
+  - Tested independently
+  - Deployed independently
+  - Demonstrated to users independently
+-->
+
+### User Story 1 - [Brief Title] (Priority: P1)
+
+[Describe this user journey in plain language]
+
+**Why this priority**: [Explain the value and why it has this priority level]
+
+**Independent Test**: [Describe how this can be tested independently - e.g., "Can be fully tested by [specific action] and delivers [specific value]"]
+
+**Acceptance Scenarios**:
+
+1. **Given** [initial state], **When** [action], **Then** [expected outcome]
+2. **Given** [initial state], **When** [action], **Then** [expected outcome]
+
+---
+
+### User Story 2 - [Brief Title] (Priority: P2)
+
+[Describe this user journey in plain language]
+
+**Why this priority**: [Explain the value and why it has this priority level]
+
+**Independent Test**: [Describe how this can be tested independently]
+
+**Acceptance Scenarios**:
+
+1. **Given** [initial state], **When** [action], **Then** [expected outcome]
+
+---
+
+### User Story 3 - [Brief Title] (Priority: P3)
+
+[Describe this user journey in plain language]
+
+**Why this priority**: [Explain the value and why it has this priority level]
+
+**Independent Test**: [Describe how this can be tested independently]
+
+**Acceptance Scenarios**:
+
+1. **Given** [initial state], **When** [action], **Then** [expected outcome]
+
+---
+
+… (output truncated)
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+The repository uses sequential numbering and has no existing `specs/` directory, so this will be `specs/001-ticket-management-backend`. The template requires user journeys, edge cases, functional requirements, entities, success criteria, and assumptions; I’ll preserve that structure while including the requested contracts, schema, and transition matrix as requirement-level artifacts.
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="generic" data-tool-name="run_in_terminal"><details>
+<summary>Tool use: **run_in_terminal**</summary>
+
+Running ` .specify/scripts/bash/resolve-template.sh spec-template --json`
+
+Resolve the active feature specification template before creating the spec.
+
+```bash
+cd /home/aniket-kumar/poc/TMS && .specify/scripts/bash/resolve-template.sh spec-template --json
+```
+
+**Result:**
+
+```
+Note: The tool simplified the command to ` .specify/scripts/bash/resolve-template.sh spec-template --json` (terminal ID=29b654e1-2e01-4b7e-8889-d0e7c0e92b9d). This is the output of running that command instead:
+aniket-kumar@TTNPL-aniket:~/poc/TMS$  .specify/scripts/bash/resolve-template.sh
+spec-template --json
+{"TEMPLATE_NAME":"spec-template","TEMPLATE_CONTENT":"# Feature Specification: [F
+EATURE NAME]\n\n**Feature Branch**: `[###-feature-name]`\n\n**Created**: [DATE]\
+n\n**Status**: Draft\n\n**Input**: User description: \"$ARGUMENTS\"\n\n## User S
+cenarios & Testing *(mandatory)*\n\n<!--\n  IMPORTANT: User stories should be PR
+IORITIZED as user journeys ordered by importance.\n  Each user story/journey mus
+t be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,\n  you
+should still have a viable MVP (Minimum Viable Product) that delivers value.\n\n
+  Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most criti
+cal.\n  Think of each story as a standalone slice of functionality that can be:\
+n  - Developed independently\n  - Tested independently\n  - Deployed independent
+ly\n  - Demonstrated to users independently\n-->\n\n### User Story 1 - [Brief Ti
+tle] (Priority: P1)\n\n[Describe this user journey in plain language]\n\n**Why t
+his priority**: [Explain the value and why it has this priority level]\n\n**Inde
+pendent Test**: [Describe how this can be tested independently - e.g., \"Can be
+fully tested by [specific action] and delivers [specific value]\"]\n\n**Acceptan
+ce Scenarios**:\n\n1. **Given** [initial state], **When** [action], **Then** [ex
+pected outcome]\n2. **Given** [initial state], **When** [action], **Then** [expe
+cted outcome]\n\n---\n\n### User Story 2 - [Brief Title] (Priority: P2)\n\n[Desc
+ribe this user journey in plain language]\n\n**Why this priority**: [Explain the
+ value and why it has this priority level]\n\n**Independent Test**: [Describe ho
+w this can be tested independently]\n\n**Acceptance Scenarios**:\n\n1.
+… (output truncated)
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+The resolved template is the standard Spec Kit scaffold. I’m now writing the spec with three independently testable journeys, explicit Given/When/Then coverage, the full endpoint payload contract, transition rules, relational schema/index requirements, and boundary/error cases; the checklist will record all quality items as passed because the requested API/schema details are product deliverables rather than internal implementation 
+
+The resolved template is the standard Spec Kit scaffold. I’m now writing the spec with three independently testable journeys, explicit Given/When/Then coverage, the full endpoint payload contract, transition rules, relational schema/index requirements, and boundary/error cases; the checklist will record all quality items as passed because the requested API/schema details are product deliverables rather than internal implementation design.
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="write" data-tool-name="create_file"><details>
+<summary>Tool use: **create_file**</summary>
+
+Created `spec.md`
+
+**Input:**
+
+- content:
+
+```
+# Feature Specification: Ticket Management Backend
+
+**Feature Branch**: `001-ticket-management-backend`
+
+**Created**: 2026-09-08
+
+**Status**: Draft
+
+**Input**: User description: "Build a Ticket Management System backend with ticket and comment management, status transitions, search, filtering, persistence, validation, REST contracts, relational schema, and automated test coverage."
+
+## User Scenarios & Testing *(mandatory)*
+
+### User Story 1 - Manage Ticket Lifecycle (Priority: P1)
+
+A support user can create a ticket, inspect its details, update editable information, and move it through the defined lifecycle so work can be tracked from opening to resolution or cancellation.
+
+**Why this priority**: Ticket lifecycle management is the core value of the system and provides a usable MVP without secondary discovery features.
+
+**Independent Test**: Create one ticket, retrieve it, update its editable fields, apply every valid status transition, and verify that invalid transitions are rejected without changing the ticket.
+
+**Acceptance Scenarios**:
+
+1. **Given** valid title, description, and priority, **When** a user creates a ticket, **Then** the system returns the new ticket with a generated identifier, status `OPEN`, and managed creation and update timestamps.
+2. **Given** an existing ticket, **When** a user requests its details, **Then** the response includes its attributes and all associated comments.
+3. **Given** an existing ticket and valid replacement title, description, priority, or assignee, **When** the user updates ticket details, **Then** only those editable fields change and status and creation time remain unchanged.
+4. **Given** a ticket in `OPEN`, **When** the user requests `IN_PROGRESS` or `CANCELLED`, **Then** the status changes successfully.
+5. **Given** a ticket in `IN_PROGRESS`, **When** the user requests `RESOLVED` or `CANCELLED`, **Then** the status changes successfully.
+6. **Given** a ticket in `RESOLVED`, **When** the user requests `CLOSED`, **Then** the status changes successfully.
+7. **Given** a ticket in `CLOSED` or `CANCELLED`, **When** the user requests any new status, **Then** the system rejects the request with HTTP 409 and leaves the terminal status unchanged.
+8. **Given** a ticket in `RESOLVED`, **When** the user requests `OPEN`, **Then** the system rejects the request with HTTP 409 and leaves the status unchanged.
+
+---
+
+### User Story 2 - Discover and Discuss Tickets (Priority: P2)
+
+A support user can list tickets, search by a keyword, filter by status, paginate results, and add comments so they can find relevant work and preserve its discussion history.
+
+**Why this priority**: Discovery and collaboration make the lifecycle useful at more than trivial scale, while remaining independent from the status state machine.
+
+**Independent Test**: Seed tickets with varied titles, descriptions, statuses, and comments; verify unfiltered, keyword, status, combined, and paginated results, then add and retrieve a comment.
+
+**Acceptance Scenarios**:
+
+1. **Given** persisted tickets, **When** the user lists tickets without filters, **Then** the response returns a paginated result with total count and page metadata.
+2. **Given** tickets whose title or description contains a keyword, **When** the user searches with that keyword, **Then** only matching tickets are returned regardless of which of those two fields matched.
+3. **Given** tickets with different statuses, **When** the user filters by a valid status, **Then** only tickets with that status are returned.
+4. **Given** a keyword and a status filter, **When** the user lists tickets with both, **Then** every result matches both constraints.
+5. **Given** an existing ticket and valid comment content, **When** the user adds a comment, **Then** the system returns the comment with a generated identifier and creation timestamp, associated with that ticket.
+6. **Given** a missing ticket identifier, **When** the user adds a comment, **Then** the system returns HTTP 404 with a structured error and does not persist the comment.
+
+---
+
+### User Story 3 - Receive Predictable Validation Errors (Priority: P3)
+
+A client receives clear, consistent feedback when it submits invalid ticket, comment, query, or status data, allowing the client to correct the request without exposing internal failure details.
+
+**Why this priority**: Predictable errors protect data quality and make all other workflows usable for clients and operators.
+
+**Independent Test**: Submit each documented invalid boundary case and verify the HTTP status, field-level details where applicable, stable error shape, and unchanged persisted data.
+
+**Acceptance Scenarios**:
+
+1. **Given** a title shorter than 5 characters, longer than 150 characters, or blank, **When** a ticket is created or updated, **Then** the system returns HTTP 400 with a title validation detail.
+2. **Given** blank ticket description or comment content, **When** the request is submitted, **Then** the system returns HTTP 400 with the relevant validation detail.
+3. **Given** comment content longer than 1000 characters, **When** the comment is submitted, **Then** the system returns HTTP 400 and does not persist it.
+4. **Given** an unknown ticket identifier, **When** details, update, status, or comment operations are requested, **Then** the system returns HTTP 404 with a structured not-found error.
+5. **Given** an invalid status or priority value, **When** the request is submitted, **Then** the system returns HTTP 400 with an allowed-values error.
+6. **Given** an unexpected server failure, **When** the request is processed, **Then** the response contains a safe generic message and does not expose stack traces or sensitive persistence details.
+
+### Edge Cases
+
+- A title of exactly 5 characters and exactly 150 characters is accepted; lengths outside that inclusive range are rejected.
+- A comment of exactly 1 character and exactly 1000 characters is accepted; blank or longer content is rejected.
+- Leading and trailing whitespace is ignored for required text validation, and stored values follow the documented normalization rule.
+- An empty keyword returns the normal unfiltered listing; whitespace-only keyword is treated as empty.
+- A negative page, zero or negative size, or size above the documented maximum returns HTTP 400.
+- An unknown status filter returns HTTP 400 rather than an empty result.
+- A missing, null, or malformed request body returns HTTP 400 with a structured error.
+- A request to update a nonexistent ticket returns HTTP 404 and makes no database change.
+- A comment referencing a nonexistent ticket returns HTTP 404 and makes no database change.
+- Concurrent valid status updates MUST preserve the state-machine rule; an update that no longer applies to the current state is rejected.
+- `CLOSED` and `CANCELLED` are terminal and cannot transition to themselves or any other status.
+- A ticket with no comments returns an empty comments collection, not a missing field.
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+- **FR-001**: The system MUST create tickets with a generated Long identifier, required title, required description, priority, status `OPEN`, and managed `createdAt` and `updatedAt` timestamps.
+- **FR-002**: The system MUST accept ticket titles from 5 through 150 characters inclusive and reject blank or out-of-range titles.
+- **FR-003**: The system MUST support priorities `LOW`, `MEDIUM`, `HIGH`, and `URGENT`.
+- **FR-004**: The system MUST support statuses `OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`, and `CANCELLED`.
+- **FR-005**: The system MUST allow updates to title, description, priority, and optional assigneeId without changing status or createdAt.
+- **FR-006**: The system MUST expose ticket details with associated comments and return HTTP 404 for an unknown ticket identifier.
+- **FR-007**: The system MUST enforce exactly these status transitions: `OPEN -> IN_PROGRESS`, `IN_PROGRESS -> RESOLVED`, `RESOLVED -> CLOSED`, `OPEN -> CANCELLED`, and `IN_PROGRESS -> CANCELLED`.
+- **FR-008**: The system MUST reject every transition not listed in FR-007, including transitions from terminal states, with HTTP 409 and no state change.
+- **FR-009**: The system MUST list tickets with page, size, total count, and page metadata, using page 0 and size 10 as defaults and rejecting invalid or excessive page sizes.
+- **FR-010**: The system MUST filter ticket listings by one valid status when `status` is provided.
+- **FR-011**: The system MUST search ticket title and description by keyword when `keyword` is provided, with case-insensitive matching and no partial-field omission.
+- **FR-012**: The system MUST allow status filtering and keyword search in the same listing request, applying both constraints.
+- **FR-013**: The system MUST create comments only for an existing ticket and assign each comment a generated Long identifier, ticket association, required content, optional author, and managed createdAt timestamp.
+- **FR-014**: The system MUST accept comment content from 1 through 1000 characters inclusive and reject blank or longer content.
+- **FR-015**: The system MUST default an omitted comment author to `system` and preserve an explicitly supplied nonblank author within the documented response.
+- **FR-016**: The system MUST persist tickets and comments durably and maintain the ticket-comment relationship with referential integrity.
+- **FR-017**: The system MUST validate request bodies, path parameters, query parameters, enum values, and pagination boundaries before applying mutations or searches.
+- **FR-018**: The system MUST return a consistent structured error payload containing at least an HTTP status, machine-readable error type or code, human-readable message, request path, timestamp, and field violations when applicable.
+- **FR-019**: The system MUST return HTTP 400 for malformed or invalid input, HTTP 404 for missing ticket references, and HTTP 409 for invalid state transitions.
+- **FR-020**: The system MUST expose only request and response DTOs at the API boundary; persistence records are not API payloads.
+- **FR-021**: The system MUST provide unit coverage for service CRUD behavior, keyword search, comment addition, and every valid and invalid status transition.
+- **FR-022**: The system MUST provide controller-slice coverage for validation failures, successful responses, not-found responses, conflict responses, and structured error payloads.
+
+### REST API Contract
+
+#### Ticket endpoints
+
+| Method | Path | Request | Success response |
+| --- | --- | --- | --- |
+| POST | `/api/v1/tickets` | `{ "title": "Login fails", "description": "Users cannot sign in", "priority": "HIGH", "assigneeId": 42 }` | `201` with Ticket response; status is `OPEN` |
+| GET | `/api/v1/tickets` | Query: `status`, `keyword`, `page`, `size` | `200` with `{ "content": [TicketSummary], "page": { "number": 0, "size": 10, "totalElements": 1, "totalPages": 1 } }` |
+| GET | `/api/v1/tickets/{id}` | Path ticket id | `200` with Ticket detail and `comments` collection |
+| PUT | `/api/v1/tickets/{id}` | `{ "title": "Login fails for SSO", "description": "...", "priority": "URGENT", "assigneeId": "agent-7" }` | `200` with updated Ticket response |
+| PATCH | `/api/v1/tickets/{id}/status` | `{ "status": "IN_PROGRESS" }` | `200` with updated Ticket response |
+| POST | `/api/v1/tickets/{id}/comments` | `{ "content": "Investigating logs", "author": "agent-7" }` | `201` with Comment response |
+
+Ticket response fields are `id`, `title`, `description`, `priority`, `status`, `assigneeId`,
+`createdAt`, and `updatedAt`. Ticket detail additionally contains `comments`.
+
+#### Error response
+
+All documented errors use the same shape: `{ "type": "VALIDATION_ERROR", "status": 400,
+"message": "Request validation failed", "path": "/api/v1/tickets", "timestamp":
+"2026-09-08T12:00:00Z", "fieldErrors": [{ "field": "title", "message": "must be
+between 5 and 150 characters" }] }`. `fieldErrors` may be empty when the error is not
+field-specific. Error types include `VALIDATION_ERROR`, `NOT_FOUND`, `INVALID_STATUS_TRANSITION`,
+`INVALID_ENUM_VALUE`, and `INTERNAL_ERROR`.
+
+### Relational Schema Requirements
+
+- **tickets** MUST contain `id` as a generated numeric primary key; `title` as required text;
+  `description` as required text; `priority` and `status` as constrained enum-compatible values;
+  nullable `assignee_id`; and non-null `created_at` and `updated_at` timestamps.
+- **comments** MUST contain `id` as a generated numeric primary key; required `ticket_id` as a
+  foreign key to `tickets.id`; required `content`; optional `author`; and non-null `created_at`.
+- Deleting a ticket MUST follow an explicit comment-retention rule; the default for this feature is
+  to delete associated comments with the ticket so no orphan comments remain.
+- The schema MUST index `tickets.status` for status filtering, `tickets.created_at` for stable
+  listing order, and `comments.ticket_id` for detail retrieval.
+- The schema MUST provide a database-supported strategy for keyword matching across `tickets.title`
+  and `tickets.description`; the selected strategy MUST support the expected search volume and be
+  documented during planning.
+
+### Key Entities *(include if feature involves data)*
+
+- **Ticket**: A trackable unit of support work with required title and description, priority,
+  lifecycle status, optional assignee, timestamps, and zero or more comments.
+- **Comment**: A chronological discussion entry owned by one ticket, with required content,
+  optional author, and creation timestamp.
+- **Status Transition**: A permitted change from one ticket status to another, constrained by the
+  lifecycle state machine and rejected when not explicitly allowed.
+- **Page**: A listing result containing ticket summaries, requested page number and size, total
+  elements, and total pages.
+- **Problem Detail**: A stable error result describing validation, missing resources, conflicts, or
+  unexpected failures without exposing internal details.
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: A client can create, retrieve, update, and comment on a valid ticket through the
+  documented workflow with at least 99% successful completion in acceptance testing.
+- **SC-002**: At least 95% of valid ticket listings, searches, filters, and detail requests return a
+  usable response within 1 second under the agreed baseline dataset and load.
+- **SC-003**: 100% of the five permitted transitions succeed and 100% of attempted unlisted
+  transitions are rejected without changing ticket status in automated acceptance tests.
+- **SC-004**: 100% of requests violating documented title, comment, enum, pagination, or required
+  field boundaries receive a structured client-correctable error.
+- **SC-005**: 100% of successfully created tickets and comments remain available after the service
+  is restarted and reconnects to its configured data store.
+- **SC-006**: At least 90% of representative users can find a target ticket using status filtering,
+  keyword search, or both on their first attempt during usability acceptance testing.
+- **SC-007**: No client-facing error response exposes a stack trace, database detail, credential, or
+  other internal secret in security and error-contract tests.
+
+## Assumptions
+
+- The first release serves authenticated or trusted internal support users; authentication and
+  authorization policy are outside this feature unless added by a later specification.
+- `assigneeId` is an opaque optional identifier; resolving it to a user directory is out of scope.
+- The default comment author is `system` when the caller omits author.
+- List results are ordered by `createdAt` descending for stable newest-first discovery.
+- Page numbering is zero-based, the default page size is 10, and the maximum page size is 100.
+- Keyword matching is case-insensitive and searches title and description; stemming, fuzzy matching,
+  highlighting, and relevance ranking are out of scope.
+- Timestamps are represented in UTC and are generated and maintained by the service.
+- The initial persistence approach uses the project-approved relational database configuration and
+  schema management policy; authentication, audit history, attachments, notifications, and deletion
+  APIs are out of scope.
+- The implementation must follow the project constitution and its specified Spring Boot, Java 21,
+  Spring Data JPA, PostgreSQL, Lombok, DTO, validation, error-handling, and testing constraints.
+
+```
+
+- filePath: `/home/aniket-kumar/poc/TMS/specs/001-ticket-management-backend/spec.md`
+
+**Result:**
+
+```
+The following files were successfully edited:
+/home/aniket-kumar/poc/TMS/specs/001-ticket-management-backend/spec.md
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="write" data-tool-name="create_file"><details>
+<summary>Tool use: **create_file**</summary>
+
+Created `requirements.md`
+
+**Input:**
+
+- content:
+
+```
+# Specification Quality Checklist: Ticket Management Backend
+
+**Purpose**: Validate specification completeness and quality before proceeding to planning
+**Created**: 2026-09-08
+**Feature**: [spec.md](../spec.md)
+
+## Content Quality
+
+- [x] No implementation details (languages, frameworks, APIs)
+- [x] Focused on user value and business needs
+- [x] Written for non-technical stakeholders
+- [x] All mandatory sections completed
+
+## Requirement Completeness
+
+- [x] No [NEEDS CLARIFICATION] markers remain
+- [x] Requirements are testable and unambiguous
+- [x] Success criteria are measurable
+- [x] Success criteria are technology-agnostic (no implementation details)
+- [x] All acceptance scenarios are defined
+- [x] Edge cases are identified
+- [x] Scope is clearly bounded
+- [x] Dependencies and assumptions identified
+
+## Feature Readiness
+
+- [x] All functional requirements have clear acceptance criteria
+- [x] User scenarios cover primary flows
+- [x] Feature meets measurable outcomes defined in Success Criteria
+- [x] No implementation details leak into specification
+
+## Notes
+
+- API paths, payloads, error shapes, schema requirements, and test deliverables are included because
+  they were explicitly requested as feature contracts and acceptance artifacts. Internal class,
+  package, and query implementation choices remain deferred to planning.
+- All checklist items passed during specification validation; the feature is ready for `/speckit-plan`.
+
+```
+
+- filePath: `/home/aniket-kumar/poc/TMS/specs/001-ticket-management-backend/checklists/requirements.md`
+
+**Result:**
+
+```
+The following files were successfully edited:
+/home/aniket-kumar/poc/TMS/specs/001-ticket-management-backend/checklists/requirements.md
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="write" data-tool-name="create_file"><details>
+<summary>Tool use: **create_file**</summary>
+
+Created `feature.json`
+
+**Input:**
+
+- content:
+
+```
+{
+  "feature_directory": "specs/001-ticket-management-backend"
+}
+
+```
+
+- filePath: `/home/aniket-kumar/poc/TMS/.specify/feature.json`
+
+**Result:**
+
+```
+The following files were successfully edited:
+/home/aniket-kumar/poc/TMS/.specify/feature.json
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="write" data-tool-name="textEditGroup"><details>
+<summary>Edit: **spec.md**</summary>
+
+@@ lines 1-1 @@
+
+```
+# Feature Specification: Ticket Management Backend
+
+**Feature Branch**: `001-ticket-management-backend`
+
+**Created**: 2026-09-08
+
+**Status**: Draft
+
+**Input**: User description: "Build a Ticket Management System backend with ticket and comment management, status transitions, search, filtering, persistence, validation, REST contracts, relational schema, and automated test coverage."
+
+## User Scenarios & Testing *(mandatory)*
+
+### User Story 1 - Manage Ticket Lifecycle (Priority: P1)
+
+A support user can create a ticket, inspect its details, update editable information, and move it through the defined lifecycle so work can be tracked from opening to resolution or cancellation.
+
+**Why this priority**: Ticket lifecycle management is the core value of the system and provides a usable MVP without secondary discovery features.
+
+**Independent Test**: Create one ticket, retrieve it, update its editable fields, apply every valid status transition, and verify that invalid transitions are rejected without changing the ticket.
+
+**Acceptance Scenarios**:
+
+1. **Given** valid title, description, and priority, **When** a user creates a ticket, **Then** the system returns the new ticket with a generated identifier, status `OPEN`, and managed creation and update timestamps.
+2. **Given** an existing ticket, **When** a user requests its details, **Then** the response includes its attributes and all associated comments.
+3. **Given** an existing ticket and valid replacement title, description, priority, or assignee, **When** the user updates ticket details, **Then** only those editable fields change and status and creation time remain unchanged.
+4. **Given** a ticket in `OPEN`, **When** the user requests `IN_PROGRESS` or `CANCELLED`, **Then** the status changes successfully.
+5. **Given** a ticket in `IN_PROGRESS`, **When** the user requests `RESOLVED` or `CANCELLED`, **Then** the status changes successfully.
+6. **Given** a ticket in `RESOLVED`, **When** the user requests `CLOSED`, **Then** the status changes successfully.
+7. **Given** a ticket in `CLOSED` or `CANCELLED`, **When** the user requests any new status, **Then** the system rejects the request with HTTP 409 and leaves the terminal status unchanged.
+8. **Given** a ticket in `RESOLVED`, **When** the user requests `OPEN`, **Then** the system rejects the request with HTTP 409 and leaves the status unchanged.
+
+---
+
+### User Story 2 - Discover and Discuss Tickets (Priority: P2)
+
+A support user can list tickets, search by a keyword, filter by status, paginate results, and add comments so they can find relevant work and preserve its discussion history.
+
+**Why this priority**: Discovery and collaboration make the lifecycle useful at more than trivial scale, while remaining independent from the status state machine.
+
+**Independent Test**: Seed tickets with varied titles, descriptions, statuses, and comments; verify unfiltered, keyword, status, combined, and paginated results, then add and retrieve a comment.
+
+**Acceptance Scenarios**:
+
+1. **Given** persisted tickets, **When** the user lists tickets without filters, **Then** the response returns a paginated result with total count and page metadata.
+2. **Given** tickets whose title or description contains a keyword, **When** the user searches with that keyword, **Then** only matching tickets are returned regardless of which of those two fields matched.
+3. **Given** tickets with different statuses, **When** the user filters by a valid status, **Then** only tickets with that status are returned.
+4. **Given** a keyword and a status filter, **When** the user lists tickets with both, **Then** every result matches both constraints.
+5. **Given** an existing ticket and valid comment content, **When** the user adds a comment, **Then** the system returns the comment with a generated identifier and creation timestamp, associated with that ticket.
+6. **Given** a missing ticket identifier, **When** the user adds a comment, **Then** the system returns HTTP 404 with a structured error and does not persist the comment.
+
+---
+
+### User Story 3 - Receive Predictable Validation Errors (Priority: P3)
+
+A client receives clear, consistent feedback when it submits invalid ticket, comment, query, or status data, allowing the client to correct the request without exposing internal failure details.
+
+**Why this priority**: Predictable errors protect data quality and make all other workflows usable for clients and operators.
+
+**Independent Test**: Submit each documented invalid boundary case and verify the HTTP status, field-level details where applicable, stable error shape, and unchanged persisted data.
+
+**Acceptance Scenarios**:
+
+1. **Given** a title shorter than 5 characters, longer than 150 characters, or blank, **When** a ticket is created or updated, **Then** the system returns HTTP 400 with a title validation detail.
+2. **Given** blank ticket description or comment content, **When** the request is submitted, **Then** the system returns HTTP 400 with the relevant validation detail.
+3. **Given** comment content longer than 1000 characters, **When** the comment is submitted, **Then** the system returns HTTP 400 and does not persist it.
+4. **Given** an unknown ticket identifier, **When** details, update, status, or comment operations are requested, **Then** the system returns HTTP 404 with a structured not-found error.
+5. **Given** an invalid status or priority value, **When** the request is submitted, **Then** the system returns HTTP 400 with an allowed-values error.
+6. **Given** an unexpected server failure, **When** the request is processed, **Then** the response contains a safe generic message and does not expose stack traces or sensitive persistence details.
+
+### Edge Cases
+
+- A title of exactly 5 characters and exactly 150 characters is accepted; lengths outside that inclusive range are rejected.
+- A comment of exactly 1 character and exactly 1000 characters is accepted; blank or longer content is rejected.
+- Leading and trailing whitespace is ignored for required text validation, and stored values follow the documented normalization rule.
+- An empty keyword returns the normal unfiltered listing; whitespace-only keyword is treated as empty.
+- A negative page, zero or negative size, or size above the documented maximum returns HTTP 400.
+- An unknown status filter returns HTTP 400 rather than an empty result.
+- A missing, null, or malformed request body returns HTTP 400 with a structured error.
+- A request to update a nonexistent ticket returns HTTP 404 and makes no database change.
+- A comment referencing a nonexistent ticket returns HTTP 404 and makes no database change.
+- Concurrent valid status updates MUST preserve the state-machine rule; an update that no longer applies to the current state is rejected.
+- `CLOSED` and `CANCELLED` are terminal and cannot transition to themselves or any other status.
+- A ticket with no comments returns an empty comments collection, not a missing field.
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+- **FR-001**: The system MUST create tickets with a generated Long identifier, required title, required description, priority, status `OPEN`, and managed `createdAt` and `updatedAt` timestamps.
+- **FR-002**: The system MUST accept ticket titles from 5 through 150 characters inclusive and reject blank or out-of-range titles.
+- **FR-003**: The system MUST support priorities `LOW`, `MEDIUM`, `HIGH`, and `URGENT`.
+- **FR-004**: The system MUST support statuses `OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`, and `CANCELLED`.
+- **FR-005**: The system MUST allow updates to title, description, priority, and optional assigneeId without changing status or createdAt.
+- **FR-006**: The system MUST expose ticket details with associated comments and return HTTP 404 for an unknown ticket identifier.
+- **FR-007**: The system MUST enforce exactly these status transitions: `OPEN -> IN_PROGRESS`, `IN_PROGRESS -> RESOLVED`, `RESOLVED -> CLOSED`, `OPEN -> CANCELLED`, and `IN_PROGRESS -> CANCELLED`.
+- **FR-008**: The system MUST reject every transition not listed in FR-007, including transitions from terminal states, with HTTP 409 and no state change.
+- **FR-009**: The system MUST list tickets with page, size, total count, and page metadata, using page 0 and size 10 as defaults and rejecting invalid or excessive page sizes.
+- **FR-010**: The system MUST filter ticket listings by one valid status when `status` is provided.
+- **FR-011**: The system MUST search ticket title and description by keyword when `keyword` is provided, with case-insensitive matching and no partial-field omission.
+- **FR-012**: The system MUST allow status filtering and keyword search in the same listing request, applying both constraints.
+- **FR-013**: The system MUST create comments only for an existing ticket and assign each comment a generated Long identifier, ticket association, required content, optional author, and managed createdAt timestamp.
+- **FR-014**: The system MUST accept comment content from 1 through 1000 characters inclusive and reject blank or longer content.
+- **FR-015**: The system MUST default an omitted comment author to `system` and preserve an explicitly supplied nonblank author within the documented response.
+- **FR-016**: The system MUST persist tickets and comments durably and maintain the ticket-comment relationship with referential integrity.
+- **FR-017**: The system MUST validate request bodies, path parameters, query parameters, enum values, and pagination boundaries before applying mutations or searches.
+- **FR-018**: The system MUST return a consistent structured error payload containing at least an HTTP status, machine-readable error type or code, human-readable message, request path, timestamp, and field violations when applicable.
+- **FR-019**: The system MUST return HTTP 400 for malformed or invalid input, HTTP 404 for missing ticket references, and HTTP 409 for invalid state transitions.
+- **FR-020**: The system MUST expose only request and response DTOs at the API boundary; persistence records are not API payloads.
+- **FR-021**: The system MUST provide unit coverage for service CRUD behavior, keyword search, comment addition, and every valid and invalid status transition.
+- **FR-022**: The system MUST provide controller-slice coverage for validation failures, successful responses, not-found responses, conflict responses, and structured error payloads.
+
+### REST API Contract
+
+#### Ticket endpoints
+
+| Method | Path | Request | Success response |
+| --- | --- | --- | --- |
+| POST | `/api/v1/tickets` | `{ "title": "Login fails", "description": "Users cannot sign in", "priority": "HIGH", "assigneeId": 42 }` | `201` with Ticket response; status is `OPEN` |
+| GET | `/api/v1/tickets` | Query: `status`, `keyword`, `page`, `size` | `200` with `{ "content": [TicketSummary], "page": { "number": 0, "size": 10, "totalElements": 1, "totalPages": 1 } }` |
+| GET | `/api/v1/tickets/{id}` | Path ticket id | `200` with Ticket detail and `comments` collection |
+| PUT | `/api/v1/tickets/{id}` | `{ "title": "Login fails for SSO", "description": "...", "priority": "URGENT", "assigneeId": "agent-7" }` | `200` with updated Ticket response |
+| PATCH | `/api/v1/tickets/{id}/status` | `{ "status": "IN_PROGRESS" }` | `200` with updated Ticket response |
+| POST | `/api/v1/tickets/{id}/comments` | `{ "content": "Investigating logs", "author": "agent-7" }` | `201` with Comment response |
+
+Ticket response fields are `id`, `title`, `description`, `priority`, `status`, `assigneeId`,
+`createdAt`, and `updatedAt`. Ticket detail additionally contains `comments`.
+
+#### Error response
+
+All documented errors use the same shape: `{ "type": "VALIDATION_ERROR", "status": 400,
+"message": "Request validation failed", "path": "/api/v1/tickets", "timestamp":
+"2026-09-08T12:00:00Z", "fieldErrors": [{ "field": "title", "message": "must be
+between 5 and 150 characters" }] }`. `fieldErrors` may be empty when the error is not
+field-specific. Error types include `VALIDATION_ERROR`, `NOT_FOUND`, `INVALID_STATUS_TRANSITION`,
+`INVALID_ENUM_VALUE`, and `INTERNAL_ERROR`.
+
+### Relational Schema Requirements
+
+- **tickets** MUST contain `id` as a generated numeric primary key; `title` as required text;
+  `description` as required text; `priority` and `status` as constrained enum-compatible values;
+  nullable `assignee_id`; and non-null `created_at` and `updated_at` timestamps.
+- **comments** MUST contain `id` as a generated numeric primary key; required `ticket_id` as a
+  foreign key to `tickets.id`; required `content`; optional `author`; and non-null `created_at`.
+- Deleting a ticket MUST follow an explicit comment-retention rule; the default for this feature is
+  to delete associated comments with the ticket so no orphan comments remain.
+- The schema MUST index `tickets.status` for status filtering, `tickets.created_at` for stable
+  listing order, and `comments.ticket_id` for detail retrieval.
+- The schema MUST provide a database-supported strategy for keyword matching across `tickets.title`
+  and `tickets.description`; the selected strategy MUST support the expected search volume and be
+  documented during planning.
+
+### Key Entities *(include if feature involves data)*
+
+- **Ticket**: A trackable unit of support work with required title and description, priority,
+  lifecycle status, optional assignee, timestamps, and zero or more comments.
+- **Comment**: A chronological discussion entry owned by one ticket, with required content,
+  optional author, and creation timestamp.
+- **Status Transition**: A permitted change from one ticket status to another, constrained by the
+  lifecycle state machine and rejected when not explicitly allowed.
+- **Page**: A listing result containing ticket summaries, requested page number and size, total
+  elements, and total pages.
+- **Problem Detail**: A stable error result describing validation, missing resources, conflicts, or
+  unexpected failures without exposing internal details.
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: A client can create, retrieve, update, and comment on a valid ticket through the
+  documented workflow with at least 99% successful completion in acceptance testing.
+- **SC-002**: At least 95% of valid ticket listings, searches, filters, and detail requests return a
+  usable response within 1 second under the agreed baseline dataset and load.
+- **SC-003**: 100% of the five permitted transitions succeed and 100% of attempted unlisted
+  transitions are rejected without changing ticket status in automated acceptance tests.
+- **SC-004**: 100% of requests violating documented title, comment, enum, pagination, or required
+  field boundaries receive a structured client-correctable error.
+- **SC-005**: 100% of successfully created tickets and comments remain available after the service
+  is restarted and reconnects to its configured data store.
+- **SC-006**: At least 90% of representative users can find a target ticket using status filtering,
+  keyword search, or both on their first attempt during usability acceptance testing.
+- **SC-007**: No client-facing error response exposes a stack trace, database detail, credential, or
+  other internal secret in security and error-contract tests.
+
+## Assumptions
+
+- The first release serves authenticated or trusted internal support users; authentication and
+  authorization policy are outside this feature unless added by a later specification.
+- `assigneeId` is an opaque optional identifier; resolving it to a user directory is out of scope.
+- The default comment author is `system` when the caller omits author.
+- List results are ordered by `createdAt` descending for stable newest-first discovery.
+- Page numbering is zero-based, the default page size is 10, and the maximum page size is 100.
+- Keyword matching is case-insensitive and searches title and description; stemming, fuzzy matching,
+  highlighting, and relevance ranking are out of scope.
+- Timestamps are represented in UTC and are generated and maintained by the service.
+- The initial persistence approach uses the project-approved relational database configuration and
+  schema management policy; authentication, audit history, attachments, notifications, and deletion
+  APIs are out of scope.
+- The implementation must follow the project constitution and its specified Spring Boot, Java 21,
+  Spring Data JPA, PostgreSQL, Lombok, DTO, validation, error-handling, and testing constraints.
+
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="write" data-tool-name="textEditGroup"><details>
+<summary>Edit: **requirements.md**</summary>
+
+@@ lines 1-1 @@
+
+```
+# Specification Quality Checklist: Ticket Management Backend
+
+**Purpose**: Validate specification completeness and quality before proceeding to planning
+**Created**: 2026-09-08
+**Feature**: [spec.md](../spec.md)
+
+## Content Quality
+
+- [x] No implementation details (languages, frameworks, APIs)
+- [x] Focused on user value and business needs
+- [x] Written for non-technical stakeholders
+- [x] All mandatory sections completed
+
+## Requirement Completeness
+
+- [x] No [NEEDS CLARIFICATION] markers remain
+- [x] Requirements are testable and unambiguous
+- [x] Success criteria are measurable
+- [x] Success criteria are technology-agnostic (no implementation details)
+- [x] All acceptance scenarios are defined
+- [x] Edge cases are identified
+- [x] Scope is clearly bounded
+- [x] Dependencies and assumptions identified
+
+## Feature Readiness
+
+- [x] All functional requirements have clear acceptance criteria
+- [x] User scenarios cover primary flows
+- [x] Feature meets measurable outcomes defined in Success Criteria
+- [x] No implementation details leak into specification
+
+## Notes
+
+- API paths, payloads, error shapes, schema requirements, and test deliverables are included because
+  they were explicitly requested as feature contracts and acceptance artifacts. Internal class,
+  package, and query implementation choices remain deferred to planning.
+- All checklist items passed during specification validation; the feature is ready for `/speckit-plan`.
+
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="write" data-tool-name="textEditGroup"><details>
+<summary>Edit: **feature.json**</summary>
+
+@@ lines 1-1 @@
+
+```
+{
+  "feature_directory": "specs/001-ticket-management-backend"
+}
+
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+The spec, checklist, and `feature.json` are created. The first validation pass is now focused on artifact integrity: confirming no template placeholders remain in `spec.md`, all required sections and endpoint/state-machine content exist, and the feature locator JSON points to the new directory.
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="generic" data-tool-name="run_in_terminal"><details>
+<summary>Tool use: **run_in_terminal**</summary>
+
+Running ` set -e && \! grep -nE '\\\[\[A-Z\]\[A-Z0-9\_\]\*\\\]|\\\[NEEDS CLARIFICATION:' specs/001-...`
+
+Validate the generated specification and feature locator for required sections, contracts, and absent clarification markers.
+
+```bash
+cd /home/aniket-kumar/poc/TMS && set -e && ! grep -nE '\[[A-Z][A-Z0-9_]*\]|\[NEEDS CLARIFICATION:' specs/001-ticket-management-backend/spec.md && grep -q '^## User Scenarios & Testing' specs/001-ticket-management-backend/spec.md && grep -q '^## Requirements' specs/001-ticket-management-backend/spec.md && grep -q '^## Success Criteria' specs/001-ticket-management-backend/spec.md && grep -q '^## Assumptions' specs/001-ticket-management-backend/spec.md && grep -q 'POST | `/api/v1/tickets`' specs/001-ticket-management-backend/spec.md && grep -q 'OPEN -> IN_PROGRESS' specs/001-ticket-management-backend/spec.md && grep -q '### Relational Schema Requirements' specs/001-ticket-management-backend/spec.md && grep -q '"feature_directory": "specs/001-ticket-management-backend"' .specify/feature.json && printf 'spec artifact validation passed\n'
+```
+
+**Result:**
+
+```
+Note: The tool simplified the command to ` set -e && ! grep -nE '\[[A-Z][A-Z0-9_]*\]|\[NEEDS CLARIFICATION:' specs/001-ticket-management-backend/spec.md && grep -q '^## User Scenarios & Testing' specs/001-ticket-management-backend/spec.md && grep -q '^## Requirements' specs/001-ticket-management-backend/spec.md && grep -q '^## Success Criteria' specs/001-ticket-management-backend/spec.md && grep -q '^## Assumptions' specs/001-ticket-management-backend/spec.md && grep -q 'POST | `/api/v1/tickets`' specs/001-ticket-management-backend/spec.md && grep -q 'OPEN -> IN_PROGRESS' specs/001-ticket-management-backend/spec.md && grep -q '### Relational Schema Requirements' specs/001-ticket-management-backend/spec.md && grep -q '"feature_directory": "specs/001-ticket-management-backend"' .specify/feature.json && printf 'spec artifact validation passed\n'` (terminal ID=e483470b-6ce0-4967-943a-069d52f35de8). This is the output of running that command instead:
+spec artifact validation passed
+aniket-kumar@TTNPL-aniket:~/poc/TMS$
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="generic" data-tool-name="run_in_terminal"><details>
+<summary>Tool use: **run_in_terminal**</summary>
+
+Running ` test -f specs/001-ticket-management-backend/spec.md && test -f specs/001-tic...`
+
+Confirm the single feature directory and required files were created.
+
+```bash
+cd /home/aniket-kumar/poc/TMS && test -f specs/001-ticket-management-backend/spec.md && test -f specs/001-ticket-management-backend/checklists/requirements.md && test -f .specify/feature.json && printf 'required files present\n'
+```
+
+**Result:**
+
+```
+Note: The tool simplified the command to ` test -f specs/001-ticket-management-backend/spec.md && test -f specs/001-ticket-management-backend/checklists/requirements.md && test -f .specify/feature.json && printf 'required files present\n'` (terminal ID=f2bcb511-8905-4431-81ae-34c6b4f1c917). This is the output of running that command instead:
+required files present
+aniket-kumar@TTNPL-aniket:~/poc/TMS$
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="generic" data-tool-name="run_in_terminal"><details>
+<summary>Tool use: **run_in_terminal**</summary>
+
+Running ` git status --short`
+
+Review the final workspace changes to ensure only specification artifacts were created.
+
+```bash
+cd /home/aniket-kumar/poc/TMS && git status --short
+```
+
+**Result:**
+
+```
+Note: The tool simplified the command to ` git status --short` (terminal ID=e60c6082-6a90-408b-b40c-47263147ec9e). This is the output of running that command instead:
+ M .specstory/history/2026-09-08_05-26-06Z-monorepo-constitution-for-ticket.md
+ M .specstory/statistics.json
+?? specs/
+aniket-kumar@TTNPL-aniket:~/poc/TMS$
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+The resolved template is the standard Spec Kit scaffold. I’m now writing the spec with three independently testable journeys, explicit Given/When/Then coverage, the full endpoint payload contract, transition rules, relational schema/index requirements, and boundary/error cases; the checklist will record all quality items as passed because the requested API/schema details are product deliverables rather than internal implementation design.
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="write" data-tool-name="textEditGroup"><details>
+<summary>Edit: **spec.md**</summary>
+
+@@ lines 1-1 @@
+
+```
+# Feature Specification: Ticket Management Backend
+
+**Feature Branch**: `001-ticket-management-backend`
+
+**Created**: 2026-09-08
+
+**Status**: Draft
+
+**Input**: User description: "Build a Ticket Management System backend with ticket and comment management, status transitions, search, filtering, persistence, validation, REST contracts, relational schema, and automated test coverage."
+
+## User Scenarios & Testing *(mandatory)*
+
+### User Story 1 - Manage Ticket Lifecycle (Priority: P1)
+
+A support user can create a ticket, inspect its details, update editable information, and move it through the defined lifecycle so work can be tracked from opening to resolution or cancellation.
+
+**Why this priority**: Ticket lifecycle management is the core value of the system and provides a usable MVP without secondary discovery features.
+
+**Independent Test**: Create one ticket, retrieve it, update its editable fields, apply every valid status transition, and verify that invalid transitions are rejected without changing the ticket.
+
+**Acceptance Scenarios**:
+
+1. **Given** valid title, description, and priority, **When** a user creates a ticket, **Then** the system returns the new ticket with a generated identifier, status `OPEN`, and managed creation and update timestamps.
+2. **Given** an existing ticket, **When** a user requests its details, **Then** the response includes its attributes and all associated comments.
+3. **Given** an existing ticket and valid replacement title, description, priority, or assignee, **When** the user updates ticket details, **Then** only those editable fields change and status and creation time remain unchanged.
+4. **Given** a ticket in `OPEN`, **When** the user requests `IN_PROGRESS` or `CANCELLED`, **Then** the status changes successfully.
+5. **Given** a ticket in `IN_PROGRESS`, **When** the user requests `RESOLVED` or `CANCELLED`, **Then** the status changes successfully.
+6. **Given** a ticket in `RESOLVED`, **When** the user requests `CLOSED`, **Then** the status changes successfully.
+7. **Given** a ticket in `CLOSED` or `CANCELLED`, **When** the user requests any new status, **Then** the system rejects the request with HTTP 409 and leaves the terminal status unchanged.
+8. **Given** a ticket in `RESOLVED`, **When** the user requests `OPEN`, **Then** the system rejects the request with HTTP 409 and leaves the status unchanged.
+
+---
+
+### User Story 2 - Discover and Discuss Tickets (Priority: P2)
+
+A support user can list tickets, search by a keyword, filter by status, paginate results, and add comments so they can find relevant work and preserve its discussion history.
+
+**Why this priority**: Discovery and collaboration make the lifecycle useful at more than trivial scale, while remaining independent from the status state machine.
+
+**Independent Test**: Seed tickets with varied titles, descriptions, statuses, and comments; verify unfiltered, keyword, status, combined, and paginated results, then add and retrieve a comment.
+
+**Acceptance Scenarios**:
+
+1. **Given** persisted tickets, **When** the user lists tickets without filters, **Then** the response returns a paginated result with total count and page metadata.
+2. **Given** tickets whose title or description contains a keyword, **When** the user searches with that keyword, **Then** only matching tickets are returned regardless of which of those two fields matched.
+3. **Given** tickets with different statuses, **When** the user filters by a valid status, **Then** only tickets with that status are returned.
+4. **Given** a keyword and a status filter, **When** the user lists tickets with both, **Then** every result matches both constraints.
+5. **Given** an existing ticket and valid comment content, **When** the user adds a comment, **Then** the system returns the comment with a generated identifier and creation timestamp, associated with that ticket.
+6. **Given** a missing ticket identifier, **When** the user adds a comment, **Then** the system returns HTTP 404 with a structured error and does not persist the comment.
+
+---
+
+### User Story 3 - Receive Predictable Validation Errors (Priority: P3)
+
+A client receives clear, consistent feedback when it submits invalid ticket, comment, query, or status data, allowing the client to correct the request without exposing internal failure details.
+
+**Why this priority**: Predictable errors protect data quality and make all other workflows usable for clients and operators.
+
+**Independent Test**: Submit each documented invalid boundary case and verify the HTTP status, field-level details where applicable, stable error shape, and unchanged persisted data.
+
+**Acceptance Scenarios**:
+
+1. **Given** a title shorter than 5 characters, longer than 150 characters, or blank, **When** a ticket is created or updated, **Then** the system returns HTTP 400 with a title validation detail.
+2. **Given** blank ticket description or comment content, **When** the request is submitted, **Then** the system returns HTTP 400 with the relevant validation detail.
+3. **Given** comment content longer than 1000 characters, **When** the comment is submitted, **Then** the system returns HTTP 400 and does not persist it.
+4. **Given** an unknown ticket identifier, **When** details, update, status, or comment operations are requested, **Then** the system returns HTTP 404 with a structured not-found error.
+5. **Given** an invalid status or priority value, **When** the request is submitted, **Then** the system returns HTTP 400 with an allowed-values error.
+6. **Given** an unexpected server failure, **When** the request is processed, **Then** the response contains a safe generic message and does not expose stack traces or sensitive persistence details.
+
+### Edge Cases
+
+- A title of exactly 5 characters and exactly 150 characters is accepted; lengths outside that inclusive range are rejected.
+- A comment of exactly 1 character and exactly 1000 characters is accepted; blank or longer content is rejected.
+- Leading and trailing whitespace is ignored for required text validation, and stored values follow the documented normalization rule.
+- An empty keyword returns the normal unfiltered listing; whitespace-only keyword is treated as empty.
+- A negative page, zero or negative size, or size above the documented maximum returns HTTP 400.
+- An unknown status filter returns HTTP 400 rather than an empty result.
+- A missing, null, or malformed request body returns HTTP 400 with a structured error.
+- A request to update a nonexistent ticket returns HTTP 404 and makes no database change.
+- A comment referencing a nonexistent ticket returns HTTP 404 and makes no database change.
+- Concurrent valid status updates MUST preserve the state-machine rule; an update that no longer applies to the current state is rejected.
+- `CLOSED` and `CANCELLED` are terminal and cannot transition to themselves or any other status.
+- A ticket with no comments returns an empty comments collection, not a missing field.
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+- **FR-001**: The system MUST create tickets with a generated Long identifier, required title, required description, priority, status `OPEN`, and managed `createdAt` and `updatedAt` timestamps.
+- **FR-002**: The system MUST accept ticket titles from 5 through 150 characters inclusive and reject blank or out-of-range titles.
+- **FR-003**: The system MUST support priorities `LOW`, `MEDIUM`, `HIGH`, and `URGENT`.
+- **FR-004**: The system MUST support statuses `OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`, and `CANCELLED`.
+- **FR-005**: The system MUST allow updates to title, description, priority, and optional assigneeId without changing status or createdAt.
+- **FR-006**: The system MUST expose ticket details with associated comments and return HTTP 404 for an unknown ticket identifier.
+- **FR-007**: The system MUST enforce exactly these status transitions: `OPEN -> IN_PROGRESS`, `IN_PROGRESS -> RESOLVED`, `RESOLVED -> CLOSED`, `OPEN -> CANCELLED`, and `IN_PROGRESS -> CANCELLED`.
+- **FR-008**: The system MUST reject every transition not listed in FR-007, including transitions from terminal states, with HTTP 409 and no state change.
+- **FR-009**: The system MUST list tickets with page, size, total count, and page metadata, using page 0 and size 10 as defaults and rejecting invalid or excessive page sizes.
+- **FR-010**: The system MUST filter ticket listings by one valid status when `status` is provided.
+- **FR-011**: The system MUST search ticket title and description by keyword when `keyword` is provided, with case-insensitive matching and no partial-field omission.
+- **FR-012**: The system MUST allow status filtering and keyword search in the same listing request, applying both constraints.
+- **FR-013**: The system MUST create comments only for an existing ticket and assign each comment a generated Long identifier, ticket association, required content, optional author, and managed createdAt timestamp.
+- **FR-014**: The system MUST accept comment content from 1 through 1000 characters inclusive and reject blank or longer content.
+- **FR-015**: The system MUST default an omitted comment author to `system` and preserve an explicitly supplied nonblank author within the documented response.
+- **FR-016**: The system MUST persist tickets and comments durably and maintain the ticket-comment relationship with referential integrity.
+- **FR-017**: The system MUST validate request bodies, path parameters, query parameters, enum values, and pagination boundaries before applying mutations or searches.
+- **FR-018**: The system MUST return a consistent structured error payload containing at least an HTTP status, machine-readable error type or code, human-readable message, request path, timestamp, and field violations when applicable.
+- **FR-019**: The system MUST return HTTP 400 for malformed or invalid input, HTTP 404 for missing ticket references, and HTTP 409 for invalid state transitions.
+- **FR-020**: The system MUST expose only request and response DTOs at the API boundary; persistence records are not API payloads.
+- **FR-021**: The system MUST provide unit coverage for service CRUD behavior, keyword search, comment addition, and every valid and invalid status transition.
+- **FR-022**: The system MUST provide controller-slice coverage for validation failures, successful responses, not-found responses, conflict responses, and structured error payloads.
+
+### REST API Contract
+
+#### Ticket endpoints
+
+| Method | Path | Request | Success response |
+| --- | --- | --- | --- |
+| POST | `/api/v1/tickets` | `{ "title": "Login fails", "description": "Users cannot sign in", "priority": "HIGH", "assigneeId": 42 }` | `201` with Ticket response; status is `OPEN` |
+| GET | `/api/v1/tickets` | Query: `status`, `keyword`, `page`, `size` | `200` with `{ "content": [TicketSummary], "page": { "number": 0, "size": 10, "totalElements": 1, "totalPages": 1 } }` |
+| GET | `/api/v1/tickets/{id}` | Path ticket id | `200` with Ticket detail and `comments` collection |
+| PUT | `/api/v1/tickets/{id}` | `{ "title": "Login fails for SSO", "description": "...", "priority": "URGENT", "assigneeId": "agent-7" }` | `200` with updated Ticket response |
+| PATCH | `/api/v1/tickets/{id}/status` | `{ "status": "IN_PROGRESS" }` | `200` with updated Ticket response |
+| POST | `/api/v1/tickets/{id}/comments` | `{ "content": "Investigating logs", "author": "agent-7" }` | `201` with Comment response |
+
+Ticket response fields are `id`, `title`, `description`, `priority`, `status`, `assigneeId`,
+`createdAt`, and `updatedAt`. Ticket detail additionally contains `comments`.
+
+#### Error response
+
+All documented errors use the same shape: `{ "type": "VALIDATION_ERROR", "status": 400,
+"message": "Request validation failed", "path": "/api/v1/tickets", "timestamp":
+"2026-09-08T12:00:00Z", "fieldErrors": [{ "field": "title", "message": "must be
+between 5 and 150 characters" }] }`. `fieldErrors` may be empty when the error is not
+field-specific. Error types include `VALIDATION_ERROR`, `NOT_FOUND`, `INVALID_STATUS_TRANSITION`,
+`INVALID_ENUM_VALUE`, and `INTERNAL_ERROR`.
+
+### Relational Schema Requirements
+
+- **tickets** MUST contain `id` as a generated numeric primary key; `title` as required text;
+  `description` as required text; `priority` and `status` as constrained enum-compatible values;
+  nullable `assignee_id`; and non-null `created_at` and `updated_at` timestamps.
+- **comments** MUST contain `id` as a generated numeric primary key; required `ticket_id` as a
+  foreign key to `tickets.id`; required `content`; optional `author`; and non-null `created_at`.
+- Deleting a ticket MUST follow an explicit comment-retention rule; the default for this feature is
+  to delete associated comments with the ticket so no orphan comments remain.
+- The schema MUST index `tickets.status` for status filtering, `tickets.created_at` for stable
+  listing order, and `comments.ticket_id` for detail retrieval.
+- The schema MUST provide a database-supported strategy for keyword matching across `tickets.title`
+  and `tickets.description`; the selected strategy MUST support the expected search volume and be
+  documented during planning.
+
+### Key Entities *(include if feature involves data)*
+
+- **Ticket**: A trackable unit of support work with required title and description, priority,
+  lifecycle status, optional assignee, timestamps, and zero or more comments.
+- **Comment**: A chronological discussion entry owned by one ticket, with required content,
+  optional author, and creation timestamp.
+- **Status Transition**: A permitted change from one ticket status to another, constrained by the
+  lifecycle state machine and rejected when not explicitly allowed.
+- **Page**: A listing result containing ticket summaries, requested page number and size, total
+  elements, and total pages.
+- **Problem Detail**: A stable error result describing validation, missing resources, conflicts, or
+  unexpected failures without exposing internal details.
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: A client can create, retrieve, update, and comment on a valid ticket through the
+  documented workflow with at least 99% successful completion in acceptance testing.
+- **SC-002**: At least 95% of valid ticket listings, searches, filters, and detail requests return a
+  usable response within 1 second under the agreed baseline dataset and load.
+- **SC-003**: 100% of the five permitted transitions succeed and 100% of attempted unlisted
+  transitions are rejected without changing ticket status in automated acceptance tests.
+- **SC-004**: 100% of requests violating documented title, comment, enum, pagination, or required
+  field boundaries receive a structured client-correctable error.
+- **SC-005**: 100% of successfully created tickets and comments remain available after the service
+  is restarted and reconnects to its configured data store.
+- **SC-006**: At least 90% of representative users can find a target ticket using status filtering,
+  keyword search, or both on their first attempt during usability acceptance testing.
+- **SC-007**: No client-facing error response exposes a stack trace, database detail, credential, or
+  other internal secret in security and error-contract tests.
+
+## Assumptions
+
+- The first release serves authenticated or trusted internal support users; authentication and
+  authorization policy are outside this feature unless added by a later specification.
+- `assigneeId` is an opaque optional identifier; resolving it to a user directory is out of scope.
+- The default comment author is `system` when the caller omits author.
+- List results are ordered by `createdAt` descending for stable newest-first discovery.
+- Page numbering is zero-based, the default page size is 10, and the maximum page size is 100.
+- Keyword matching is case-insensitive and searches title and description; stemming, fuzzy matching,
+  highlighting, and relevance ranking are out of scope.
+- Timestamps are represented in UTC and are generated and maintained by the service.
+- The initial persistence approach uses the project-approved relational database configuration and
+  schema management policy; authentication, audit history, attachments, notifications, and deletion
+  APIs are out of scope.
+- The implementation must follow the project constitution and its specified Spring Boot, Java 21,
+  Spring Data JPA, PostgreSQL, Lombok, DTO, validation, error-handling, and testing constraints.
+
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="write" data-tool-name="textEditGroup"><details>
+<summary>Edit: **requirements.md**</summary>
+
+@@ lines 1-1 @@
+
+```
+# Specification Quality Checklist: Ticket Management Backend
+
+**Purpose**: Validate specification completeness and quality before proceeding to planning
+**Created**: 2026-09-08
+**Feature**: [spec.md](../spec.md)
+
+## Content Quality
+
+- [x] No implementation details (languages, frameworks, APIs)
+- [x] Focused on user value and business needs
+- [x] Written for non-technical stakeholders
+- [x] All mandatory sections completed
+
+## Requirement Completeness
+
+- [x] No [NEEDS CLARIFICATION] markers remain
+- [x] Requirements are testable and unambiguous
+- [x] Success criteria are measurable
+- [x] Success criteria are technology-agnostic (no implementation details)
+- [x] All acceptance scenarios are defined
+- [x] Edge cases are identified
+- [x] Scope is clearly bounded
+- [x] Dependencies and assumptions identified
+
+## Feature Readiness
+
+- [x] All functional requirements have clear acceptance criteria
+- [x] User scenarios cover primary flows
+- [x] Feature meets measurable outcomes defined in Success Criteria
+- [x] No implementation details leak into specification
+
+## Notes
+
+- API paths, payloads, error shapes, schema requirements, and test deliverables are included because
+  they were explicitly requested as feature contracts and acceptance artifacts. Internal class,
+  package, and query implementation choices remain deferred to planning.
+- All checklist items passed during specification validation; the feature is ready for `/speckit-plan`.
+
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+<tool-use data-tool-type="write" data-tool-name="textEditGroup"><details>
+<summary>Edit: **feature.json**</summary>
+
+@@ lines 1-1 @@
+
+```
+{
+  "feature_directory": "specs/001-ticket-management-backend"
+}
+
+```
+</details></tool-use>
+
+_**Agent (copilot/auto)**_
+
+The spec, checklist, and `feature.json` are created. The first validation pass is now focused on artifact integrity: confirming no template placeholders remain in `spec.md`, all required sections and endpoint/state-machine content exist, and the feature locator JSON points to the new directory.
+
+Created the specification artifacts:
+
+- `specs/001-ticket-management-backend/spec.md`
+- `specs/001-ticket-management-backend/checklists/requirements.md`
+- `.specify/feature.json`
+
+The spec includes user stories, Given/When/Then acceptance criteria, REST contracts, status transition rules, schema/index requirements, validation/error behavior, edge cases, assumptions, and measurable success criteria.
+
+Checklist validation passed with no clarification markers. No extension hooks were registered. The feature is ready for `/speckit-plan`.
