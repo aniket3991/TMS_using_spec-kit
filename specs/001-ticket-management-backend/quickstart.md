@@ -4,8 +4,8 @@
 
 - Java 21
 - Maven Wrapper from `backend/mvnw`
-- PostgreSQL available locally, or Docker for Testcontainers
-- Environment configuration for the datasource; do not commit credentials
+- PostgreSQL available locally for runtime validation, or Docker for Testcontainers
+- `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` supplied through the environment; do not commit credentials
 
 ## Start the backend
 
@@ -18,10 +18,12 @@ cd backend
 
 Open Swagger UI at `http://localhost:8080/swagger-ui/index.html` and compare the generated endpoints with [contracts/openapi.yaml](contracts/openapi.yaml).
 
+The default runtime datasource is `jdbc:postgresql://localhost:5432/tms` with username `postgres` and an empty password placeholder. Set all three `DB_*` variables for a real deployment.
+
 ## Validate the lifecycle
 
 1. `POST /api/v1/tickets` with a valid title and description. Expect `201`, generated `id`, status `OPEN`, and timestamps.
-2. `GET /api/v1/tickets/{id}`. Expect ticket attributes only; no comments collection and no persistence entity fields.
+2. `GET /api/v1/tickets/{id}`. Expect ticket attributes only; comments are not embedded and persistence fields are not exposed.
 3. `PUT /api/v1/tickets/{id}` with valid title, description, and optional assignee. Expect editable fields updated while status and `createdAt` remain unchanged.
 4. `PATCH /api/v1/tickets/{id}/status` through `IN_PROGRESS`, `RESOLVED`, and `CLOSED`; verify the two allowed cancellation paths from `OPEN` and `IN_PROGRESS`.
 5. Attempt a terminal or otherwise unlisted transition. Expect `409` with `INVALID_STATUS_TRANSITION` and unchanged status.
@@ -47,4 +49,6 @@ cd backend
 ./mvnw test
 ```
 
-The suite should include pure JUnit/Mockito service tests, `@WebMvcTest` MockMvc contract tests, and `@DataJpaTest` PostgreSQL/Testcontainers repository tests. The concurrent transition test must demonstrate that an optimistic-lock loser receives `409` and cannot overwrite the winning status.
+The suite includes pure JUnit/Mockito service tests, Spring MVC contract tests, H2-backed JPA tests, integration tests, and OpenAPI contract checks. PostgreSQL/Testcontainers execution requires Docker; when Docker is unavailable, the H2 tests still provide deterministic local evidence while PostgreSQL validation remains pending.
+
+The concurrent transition test demonstrates that an optimistic-lock loser cannot overwrite the winning status; the HTTP conflict mapping is covered by the controller error tests.

@@ -20,9 +20,9 @@ A support user can create a ticket, inspect its details, update editable informa
 
 **Acceptance Scenarios**:
 
-1. **Given** valid title, description, and priority, **When** a user creates a ticket, **Then** the system returns the new ticket with a generated identifier, status `OPEN`, and managed creation and update timestamps.
-2. **Given** an existing ticket, **When** a user requests its details, **Then** the response includes its attributes and all associated comments.
-3. **Given** an existing ticket and valid replacement title, description, priority, or assignee, **When** the user updates ticket details, **Then** only those editable fields change and status and creation time remain unchanged.
+1. **Given** valid title, description, and optional assignee, **When** a user creates a ticket, **Then** the system returns the new ticket with a generated identifier, status `OPEN`, and managed creation and update timestamps.
+2. **Given** an existing ticket, **When** a user requests its details, **Then** the response includes ticket attributes only; comments are retrieved through the dedicated comments endpoint.
+3. **Given** an existing ticket and valid replacement title, description, or assignee, **When** the user updates ticket details, **Then** only those editable fields change and status and creation time remain unchanged.
 4. **Given** a ticket in `OPEN`, **When** the user requests `IN_PROGRESS` or `CANCELLED`, **Then** the status changes successfully.
 5. **Given** a ticket in `IN_PROGRESS`, **When** the user requests `RESOLVED` or `CANCELLED`, **Then** the status changes successfully.
 6. **Given** a ticket in `RESOLVED`, **When** the user requests `CLOSED`, **Then** the status changes successfully.
@@ -64,7 +64,7 @@ A client receives clear, consistent feedback when it submits invalid ticket, com
 2. **Given** blank ticket description or comment content, **When** the request is submitted, **Then** the system returns HTTP 400 with the relevant validation detail.
 3. **Given** comment content longer than 1000 characters, **When** the comment is submitted, **Then** the system returns HTTP 400 and does not persist it.
 4. **Given** an unknown ticket identifier, **When** details, update, status, or comment operations are requested, **Then** the system returns HTTP 404 with a structured not-found error.
-5. **Given** an invalid status or priority value, **When** the request is submitted, **Then** the system returns HTTP 400 with an allowed-values error.
+5. **Given** an invalid status value, **When** the request is submitted, **Then** the system returns HTTP 400 with an allowed-values error.
 6. **Given** an unexpected server failure, **When** the request is processed, **Then** the response contains a safe generic message and does not expose stack traces or sensitive persistence details.
 
 ### Edge Cases
@@ -80,18 +80,17 @@ A client receives clear, consistent feedback when it submits invalid ticket, com
 - A comment referencing a nonexistent ticket returns HTTP 404 and makes no database change.
 - Concurrent valid status updates MUST preserve the state-machine rule; an update that no longer applies to the current state is rejected.
 - `CLOSED` and `CANCELLED` are terminal and cannot transition to themselves or any other status.
-- A ticket with no comments returns an empty comments collection, not a missing field.
+- A ticket with no comments returns an empty page from the dedicated comments endpoint.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: The system MUST create tickets with a generated Long identifier, required title, required description, priority, status `OPEN`, and managed `createdAt` and `updatedAt` timestamps.
+- **FR-001**: The system MUST create tickets with a generated Long identifier, required title, required description, status `OPEN`, and managed `createdAt` and `updatedAt` timestamps.
 - **FR-002**: The system MUST accept ticket titles from 5 through 150 characters inclusive and reject blank or out-of-range titles.
-- **FR-003**: The system MUST support priorities `LOW`, `MEDIUM`, `HIGH`, and `URGENT`.
 - **FR-004**: The system MUST support statuses `OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`, and `CANCELLED`.
-- **FR-005**: The system MUST allow updates to title, description, priority, and optional assigneeId without changing status or createdAt.
-- **FR-006**: The system MUST expose ticket details with associated comments and return HTTP 404 for an unknown ticket identifier.
+- **FR-005**: The system MUST allow updates to title, description, and optional assigneeId without changing status or createdAt.
+- **FR-006**: The system MUST expose ticket details without embedded comments and return HTTP 404 for an unknown ticket identifier; comments MUST be available through the dedicated comments endpoint.
 - **FR-007**: The system MUST enforce exactly these status transitions: `OPEN -> IN_PROGRESS`, `IN_PROGRESS -> RESOLVED`, `RESOLVED -> CLOSED`, `OPEN -> CANCELLED`, and `IN_PROGRESS -> CANCELLED`.
 - **FR-008**: The system MUST reject every transition not listed in FR-007, including transitions from terminal states, with HTTP 409 and no state change.
 - **FR-009**: The system MUST list tickets with page, size, total count, and page metadata, using page 0 and size 10 as defaults and rejecting invalid or excessive page sizes.
@@ -115,15 +114,15 @@ A client receives clear, consistent feedback when it submits invalid ticket, com
 
 | Method | Path | Request | Success response |
 | --- | --- | --- | --- |
-| POST | `/api/v1/tickets` | `{ "title": "Login fails", "description": "Users cannot sign in", "priority": "HIGH", "assigneeId": 42 }` | `201` with Ticket response; status is `OPEN` |
+| POST | `/api/v1/tickets` | `{ "title": "Login fails", "description": "Users cannot sign in", "assigneeId": "agent-7" }` | `201` with Ticket response; status is `OPEN` |
 | GET | `/api/v1/tickets` | Query: `status`, `keyword`, `page`, `size` | `200` with `{ "content": [TicketSummary], "page": { "number": 0, "size": 10, "totalElements": 1, "totalPages": 1 } }` |
 | GET | `/api/v1/tickets/{id}` | Path ticket id | `200` with Ticket detail and `comments` collection |
-| PUT | `/api/v1/tickets/{id}` | `{ "title": "Login fails for SSO", "description": "...", "priority": "URGENT", "assigneeId": "agent-7" }` | `200` with updated Ticket response |
+| PUT | `/api/v1/tickets/{id}` | `{ "title": "Login fails for SSO", "description": "...", "assigneeId": "agent-7" }` | `200` with updated Ticket response |
 | PATCH | `/api/v1/tickets/{id}/status` | `{ "status": "IN_PROGRESS" }` | `200` with updated Ticket response |
 | POST | `/api/v1/tickets/{id}/comments` | `{ "content": "Investigating logs", "author": "agent-7" }` | `201` with Comment response |
 
-Ticket response fields are `id`, `title`, `description`, `priority`, `status`, `assigneeId`,
-`createdAt`, and `updatedAt`. Ticket detail additionally contains `comments`.
+Ticket response fields are `id`, `title`, `description`, `status`, `assigneeId`, `createdAt`,
+and `updatedAt`. Comments are returned only by the dedicated comments collection endpoint.
 
 #### Error response
 
@@ -137,7 +136,7 @@ field-specific. Error types include `VALIDATION_ERROR`, `NOT_FOUND`, `INVALID_ST
 ### Relational Schema Requirements
 
 - **tickets** MUST contain `id` as a generated numeric primary key; `title` as required text;
-  `description` as required text; `priority` and `status` as constrained enum-compatible values;
+  `description` as required text and `status` as a constrained enum-compatible value;
   nullable `assignee_id`; and non-null `created_at` and `updated_at` timestamps.
 - **comments** MUST contain `id` as a generated numeric primary key; required `ticket_id` as a
   foreign key to `tickets.id`; required `content`; optional `author`; and non-null `created_at`.
@@ -151,8 +150,8 @@ field-specific. Error types include `VALIDATION_ERROR`, `NOT_FOUND`, `INVALID_ST
 
 ### Key Entities *(include if feature involves data)*
 
-- **Ticket**: A trackable unit of support work with required title and description, priority,
-  lifecycle status, optional assignee, timestamps, and zero or more comments.
+- **Ticket**: A trackable unit of support work with required title and description, lifecycle
+  status, optional assignee, timestamps, and separately retrievable comments.
 - **Comment**: A chronological discussion entry owned by one ticket, with required content,
   optional author, and creation timestamp.
 - **Status Transition**: A permitted change from one ticket status to another, constrained by the

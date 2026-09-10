@@ -99,12 +99,12 @@ description: "Implementation tasks for the Ticket Management Backend"
 
 **Purpose**: Align documentation, configuration, performance, and final acceptance evidence with the approved design.
 
-- [ ] T048 [P] Update `TMS/backend/src/main/resources/application.properties` and supporting configuration documentation to describe PostgreSQL environment variables, UTC timestamps, `ddl-auto=update`, and non-secret defaults.
-- [ ] T049 [P] Reconcile stale priority and embedded-comment statements in `specs/001-ticket-management-backend/spec.md` with the approved no-priority and decoupled-comment decisions, or record the explicit supersession in the feature documentation.
-- [ ] T050 [P] Update `specs/001-ticket-management-backend/quickstart.md` with the final Maven commands, Swagger URL, independent comment workflow, and actual test prerequisites.
-- [ ] T051 Review `specs/001-ticket-management-backend/contracts/openapi.yaml` against controller behavior and generated Swagger output; document any compatibility or rollback impact in `specs/001-ticket-management-backend/plan.md`.
-- [ ] T052 Run the quickstart scenarios from `specs/001-ticket-management-backend/quickstart.md` against PostgreSQL and record evidence for lifecycle, discovery, validation, persistence, and error-safety criteria.
-- [ ] T053 Run `git diff --check` and `cd TMS/backend && ./mvnw test` as the final quality gate; confirm no priority symbols, entity leakage, Flyway files, or untracked secrets were introduced.
+- [x] T048 [P] Update `TMS/backend/src/main/resources/application.properties` and supporting configuration documentation to describe PostgreSQL environment variables, UTC timestamps, `ddl-auto=update`, and non-secret defaults.
+- [x] T049 [P] Reconcile stale priority and embedded-comment statements in `specs/001-ticket-management-backend/spec.md` with the approved no-priority and decoupled-comment decisions, or record the explicit supersession in the feature documentation.
+- [x] T050 [P] Update `specs/001-ticket-management-backend/quickstart.md` with the final Maven commands, Swagger URL, independent comment workflow, and actual test prerequisites.
+- [x] T051 Review `specs/001-ticket-management-backend/contracts/openapi.yaml` against controller behavior and generated Swagger output; document any compatibility or rollback impact in `specs/001-ticket-management-backend/plan.md`.
+- [x] T052 Run the quickstart scenarios from `specs/001-ticket-management-backend/quickstart.md` against PostgreSQL and record evidence for lifecycle, discovery, validation, persistence, and error-safety criteria.
+- [x] T053 Run `git diff --check` and `cd TMS/backend && ./mvnw test` as the final quality gate; confirm no priority symbols, entity leakage, Flyway files, or untracked secrets were introduced.
 
 ## Dependencies & Execution Order
 

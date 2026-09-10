@@ -99,3 +99,11 @@ All gates continue to pass. The design keeps business rules in services/domain t
 ## Complexity Tracking
 
 No constitution violations or complexity exceptions require tracking.
+
+## Phase 8 Compatibility Review
+
+The final controllers match the approved OpenAPI routes and status codes. Ticket responses omit
+priority, persistence version, and embedded comments; comments use the independent collection
+routes. Runtime configuration retains PostgreSQL with `ddl-auto=update`, while tests use H2 when
+Docker is unavailable. No rollback or schema migration impact was introduced; Flyway remains out
+of scope.
