@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 
 import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.ConstraintViolationException;
@@ -42,7 +44,8 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
-    @ExceptionHandler({HttpMessageNotReadableException.class, IllegalArgumentException.class})
+        @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
+            MissingServletRequestParameterException.class, IllegalArgumentException.class})
     ProblemDetail handleMalformedRequest(Exception exception, WebRequest request) {
         return problem(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR,
                 "Malformed request", "The request body or parameter values are invalid", request);
