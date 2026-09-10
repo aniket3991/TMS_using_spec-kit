@@ -50,12 +50,12 @@ description: "Implementation tasks for the Ticket Management Backend"
 
 **Purpose**: Add persistence interfaces, reusable search predicates, pagination, ordering, and explicit independent comment queries.
 
-- [ ] T019 [P] [US1] Create `TicketRepository` in `TMS/backend/src/main/java/com/tms/backend/tms_backend/repository/TicketRepository.java` extending `JpaRepository<Ticket, Long>` and `JpaSpecificationExecutor<Ticket>`.
-- [ ] T020 [P] [US2] Create `CommentRepository` in `TMS/backend/src/main/java/com/tms/backend/tms_backend/repository/CommentRepository.java` with a pageable ticket-id query ordered by `createdAt ASC, id ASC`.
-- [ ] T021 [US2] Implement composable ticket specifications in `TMS/backend/src/main/java/com/tms/backend/tms_backend/repository/TicketSpecifications.java` for optional status equality and grouped case-insensitive title-or-description keyword matching.
-- [ ] T022 [US2] Add repository ordering and query behavior for `createdAt DESC, id DESC` ticket listings and pageable comment retrieval without collection fetch joins in `TMS/backend/src/main/java/com/tms/backend/tms_backend/repository/`.
-- [ ] T023 [US2] Add PostgreSQL/Testcontainers repository tests in `TMS/backend/src/test/java/com/tms/backend/tms_backend/repository/TicketRepositoryTest.java` covering unfiltered, keyword-only, status-only, combined filtering, case-insensitivity, empty keyword, pagination, and deterministic ordering.
-- [ ] T024 [US2] Add comment repository tests in `TMS/backend/src/test/java/com/tms/backend/tms_backend/repository/CommentRepositoryTest.java` proving ticket-id filtering, chronological ordering, pagination, and empty results for tickets without comments.
+- [x] T019 [P] [US1] Create `TicketRepository` in `TMS/backend/src/main/java/com/tms/backend/tms_backend/repository/TicketRepository.java` extending `JpaRepository<Ticket, Long>` and `JpaSpecificationExecutor<Ticket>`.
+- [x] T020 [P] [US2] Create `CommentRepository` in `TMS/backend/src/main/java/com/tms/backend/tms_backend/repository/CommentRepository.java` with a pageable ticket-id query ordered by `createdAt ASC, id ASC`.
+- [x] T021 [US2] Implement composable ticket specifications in `TMS/backend/src/main/java/com/tms/backend/tms_backend/repository/TicketSpecifications.java` for optional status equality and grouped case-insensitive title-or-description keyword matching.
+- [x] T022 [US2] Add repository ordering and query behavior for `createdAt DESC, id DESC` ticket listings and pageable comment retrieval without collection fetch joins in `TMS/backend/src/main/java/com/tms/backend/tms_backend/repository/`.
+- [x] T023 [US2] Add PostgreSQL/Testcontainers repository tests in `TMS/backend/src/test/java/com/tms/backend/tms_backend/repository/TicketRepositoryTest.java` covering unfiltered, keyword-only, status-only, combined filtering, case-insensitivity, empty keyword, pagination, and deterministic ordering.
+- [x] T024 [US2] Add comment repository tests in `TMS/backend/src/test/java/com/tms/backend/tms_backend/repository/CommentRepositoryTest.java` proving ticket-id filtering, chronological ordering, pagination, and empty results for tickets without comments.
 
 ## Phase 5: Service Layer
 
