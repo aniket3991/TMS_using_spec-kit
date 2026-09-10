@@ -28,23 +28,23 @@ description: "Implementation tasks for the Ticket Management Backend"
 
 **Purpose**: Implement persistence entities, schema constraints, indexes, relationships, and the lifecycle rule that all stories depend on.
 
-- [ ] T007 [P] Create `TicketStatus` in `TMS/backend/src/main/java/com/tms/backend/tms_backend/entity/TicketStatus.java` with `OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`, and `CANCELLED`, plus the exact `canTransitionTo` relation and terminal-state behavior.
-- [ ] T008 [P] Create the `Ticket` JPA entity in `TMS/backend/src/main/java/com/tms/backend/tms_backend/entity/Ticket.java` with generated `Long id`, required title/description, `EnumType.STRING` status defaulting to `OPEN`, optional `String assigneeId`, UTC timestamps, and an internal optimistic-lock `@Version` field; do not add priority.
-- [ ] T009 [P] Create the `Comment` JPA entity in `TMS/backend/src/main/java/com/tms/backend/tms_backend/entity/Comment.java` with generated id, required lazy ticket association, content, optional author, and creation timestamp; configure the ticket foreign key and comment index.
-- [ ] T010 Add entity-level column constraints and indexes for `tickets.status`, `tickets.created_at`, and `comments.ticket_id` in `TMS/backend/src/main/java/com/tms/backend/tms_backend/entity/Ticket.java` and `TMS/backend/src/main/java/com/tms/backend/tms_backend/entity/Comment.java`.
-- [ ] T011 [US1] Add state-machine unit tests in `TMS/backend/src/test/java/com/tms/backend/tms_backend/entity/TicketStatusTest.java` covering all five allowed transitions, every illegal transition, self-transitions, and both terminal statuses.
+- [x] T007 [P] Create `TicketStatus` in `TMS/backend/src/main/java/com/tms/backend/tms_backend/entity/TicketStatus.java` with `OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`, and `CANCELLED`, plus the exact `canTransitionTo` relation and terminal-state behavior.
+- [x] T008 [P] Create the `Ticket` JPA entity in `TMS/backend/src/main/java/com/tms/backend/tms_backend/entity/Ticket.java` with generated `Long id`, required title/description, `EnumType.STRING` status defaulting to `OPEN`, optional `String assigneeId`, UTC timestamps, and an internal optimistic-lock `@Version` field; do not add priority.
+- [x] T009 [P] Create the `Comment` JPA entity in `TMS/backend/src/main/java/com/tms/backend/tms_backend/entity/Comment.java` with generated id, required lazy ticket association, content, optional author, and creation timestamp; configure the ticket foreign key and comment index.
+- [x] T010 Add entity-level column constraints and indexes for `tickets.status`, `tickets.created_at`, and `comments.ticket_id` in `TMS/backend/src/main/java/com/tms/backend/tms_backend/entity/Ticket.java` and `TMS/backend/src/main/java/com/tms/backend/tms_backend/entity/Comment.java`.
+- [x] T011 [US1] Add state-machine unit tests in `TMS/backend/src/test/java/com/tms/backend/tms_backend/entity/TicketStatusTest.java` covering all five allowed transitions, every illegal transition, self-transitions, and both terminal statuses.
 
 ## Phase 3: DTOs & Custom Exceptions
 
 **Purpose**: Define immutable API records, request validation, pagination payloads, and stable error types before controllers and services are implemented.
 
-- [ ] T012 [P] [US1] Create `TicketCreateRequest` and `TicketUpdateRequest` records in `TMS/backend/src/main/java/com/tms/backend/tms_backend/dto/` with Jakarta validation for title length 5-150, nonblank description, and optional assigneeId; omit priority.
-- [ ] T013 [P] [US1] Create `TicketStatusUpdateRequest` and `TicketResponse` records in `TMS/backend/src/main/java/com/tms/backend/tms_backend/dto/`, exposing status and timestamps but not version, persistence fields, or comments.
-- [ ] T014 [P] [US2] Create `CommentCreateRequest` and `CommentResponse` records in `TMS/backend/src/main/java/com/tms/backend/tms_backend/dto/` with content validation of 1-1000 characters and optional author handling.
-- [ ] T015 [P] [US2] Create generic page metadata and response records in `TMS/backend/src/main/java/com/tms/backend/tms_backend/dto/PageResponse.java` with content, page number, page size, total elements, and total pages.
-- [ ] T016 [P] Create `ResourceNotFoundException`, `InvalidStatusTransitionException`, and a stable application error-code model in `TMS/backend/src/main/java/com/tms/backend/tms_backend/exception/`.
-- [ ] T017 Create `GlobalExceptionHandler` in `TMS/backend/src/main/java/com/tms/backend/tms_backend/exception/GlobalExceptionHandler.java` using Spring `ProblemDetail` plus timestamp and field-error extensions; map validation to 400, missing resources to 404, invalid/stale transitions to 409, and unexpected failures to a safe 500 response.
-- [ ] T018 [US3] Add DTO validation tests in `TMS/backend/src/test/java/com/tms/backend/tms_backend/controller/DtoValidationTest.java` for exact title/comment boundaries, blank values, null/malformed bodies, and absence of any priority property.
+- [x] T012 [P] [US1] Create `TicketCreateRequest` and `TicketUpdateRequest` records in `TMS/backend/src/main/java/com/tms/backend/tms_backend/dto/` with Jakarta validation for title length 5-150, nonblank description, and optional assigneeId; omit priority.
+- [x] T013 [P] [US1] Create `TicketStatusUpdateRequest` and `TicketResponse` records in `TMS/backend/src/main/java/com/tms/backend/tms_backend/dto/`, exposing status and timestamps but not version, persistence fields, or comments.
+- [x] T014 [P] [US2] Create `CommentCreateRequest` and `CommentResponse` records in `TMS/backend/src/main/java/com/tms/backend/tms_backend/dto/` with content validation of 1-1000 characters and optional author handling.
+- [x] T015 [P] [US2] Create generic page metadata and response records in `TMS/backend/src/main/java/com/tms/backend/tms_backend/dto/PageResponse.java` with content, page number, page size, total elements, and total pages.
+- [x] T016 [P] Create `ResourceNotFoundException`, `InvalidStatusTransitionException`, and a stable application error-code model in `TMS/backend/src/main/java/com/tms/backend/tms_backend/exception/`.
+- [x] T017 Create `GlobalExceptionHandler` in `TMS/backend/src/main/java/com/tms/backend/tms_backend/exception/GlobalExceptionHandler.java` using Spring `ProblemDetail` plus timestamp and field-error extensions; map validation to 400, missing resources to 404, invalid/stale transitions to 409, and unexpected failures to a safe 500 response.
+- [x] T018 [US3] Add DTO validation tests in `TMS/backend/src/test/java/com/tms/backend/tms_backend/controller/DtoValidationTest.java` for exact title/comment boundaries, blank values, null/malformed bodies, and absence of any priority property.
 
 ## Phase 4: Repositories & Search Specification
 

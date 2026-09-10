@@ -13,7 +13,6 @@ Persistence table: `tickets`.
 | `assigneeId` | `String` | Optional opaque identifier; no directory lookup. |
 | `createdAt` | `Instant` | Non-null; Hibernate `@CreationTimestamp`; indexed for ordering. |
 | `updatedAt` | `Instant` | Non-null; Hibernate `@UpdateTimestamp`. |
-| `version` | `Long` | Internal `@Version` field for optimistic locking; never exposed in DTOs. |
 
 The entity has no `priority` field. Ticket list and detail responses expose only the corresponding DTO fields.
 
