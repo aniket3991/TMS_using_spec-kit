@@ -17,12 +17,12 @@ description: "Implementation tasks for the Ticket Management Backend"
 
 **Purpose**: Establish the Maven dependencies, runtime configuration, package layout, and API documentation foundation.
 
-- [ ] T001 Update `TMS/backend/pom.xml` with PostgreSQL runtime, SpringDoc OpenAPI, H2 test, and Testcontainers PostgreSQL dependencies while retaining Java 21 and Spring Boot 4.1.1.
-- [ ] T002 [P] Create the package directories under `TMS/backend/src/main/java/com/tms/backend/tms_backend/` for `config`, `controller`, `dto`, `entity`, `exception`, `repository`, and `service`.
-- [ ] T003 [P] Create matching test package directories under `TMS/backend/src/test/java/com/tms/backend/tms_backend/` for `controller`, `repository`, `service`, and `entity`.
-- [ ] T004 Configure PostgreSQL datasource, UTC/JPA settings, `spring.jpa.hibernate.ddl-auto=update`, and environment-based credentials in `TMS/backend/src/main/resources/application.properties` without committing secrets.
-- [ ] T005 [P] Add SpringDoc metadata and Swagger UI configuration in `TMS/backend/src/main/java/com/tms/backend/tms_backend/config/OpenApiConfig.java` for the `/api/v1` contract.
-- [ ] T006 Verify the baseline Maven build and application context from `TMS/backend/` with `./mvnw test`, recording any dependency or Spring Boot 4.1.1 compatibility issue before feature implementation.
+- [x] T001 Update `TMS/backend/pom.xml` with PostgreSQL runtime, SpringDoc OpenAPI, H2 test, and Testcontainers PostgreSQL dependencies while retaining Java 21 and Spring Boot 4.1.1.
+- [x] T002 [P] Create the package directories under `TMS/backend/src/main/java/com/tms/backend/tms_backend/` for `config`, `controller`, `dto`, `entity`, `exception`, `repository`, and `service`.
+- [x] T003 [P] Create matching test package directories under `TMS/backend/src/test/java/com/tms/backend/tms_backend/` for `controller`, `repository`, `service`, and `entity`.
+- [x] T004 Configure PostgreSQL datasource, UTC/JPA settings, `spring.jpa.hibernate.ddl-auto=update`, and environment-based credentials in `TMS/backend/src/main/resources/application.properties` without committing secrets.
+- [x] T005 [P] Add SpringDoc metadata and Swagger UI configuration in `TMS/backend/src/main/java/com/tms/backend/tms_backend/config/OpenApiConfig.java` for the `/api/v1` contract.
+- [x] T006 Verify the baseline Maven build and application context from `TMS/backend/` with `./mvnw test`, recording any dependency or Spring Boot 4.1.1 compatibility issue before feature implementation.
 
 ## Phase 2: Domain Model & State Machine
 
