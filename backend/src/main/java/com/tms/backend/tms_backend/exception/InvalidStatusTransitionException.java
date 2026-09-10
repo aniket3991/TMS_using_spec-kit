@@ -13,6 +13,13 @@ public class InvalidStatusTransitionException extends RuntimeException {
         this.requestedStatus = requestedStatus;
     }
 
+    public InvalidStatusTransitionException(TicketStatus currentStatus, TicketStatus requestedStatus,
+            Throwable cause) {
+        super("Ticket status transition could not be persisted", cause);
+        this.currentStatus = currentStatus;
+        this.requestedStatus = requestedStatus;
+    }
+
     public TicketStatus getCurrentStatus() {
         return currentStatus;
     }

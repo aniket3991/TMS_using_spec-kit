@@ -50,12 +50,31 @@ public class Ticket {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Version
+    private Long version;
+
     protected Ticket() {
     }
 
     public Ticket(String title, String description, String assigneeId) {
         this.title = title;
         this.description = description;
+        this.assigneeId = assigneeId;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setStatus(TicketStatus status) {
+        this.status = status;
+    }
+
+    public void setAssigneeId(String assigneeId) {
         this.assigneeId = assigneeId;
     }
 }
